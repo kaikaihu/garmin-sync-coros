@@ -13,6 +13,10 @@ env:
   GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
   GARMIN_NEWEST_NUM: ${{ secrets.GARMIN_NEWEST_NUM }}
 
+  ## Garmin Global配置
+  GARMIN_GLOBAL_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
+  GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+
   ## Coros配置
   COROS_EMAIL: ${{ secrets.COROS_EMAIL }}
   COROS_PASSWORD: ${{ secrets.COROS_PASSWORD }}
@@ -46,6 +50,10 @@ jobs:
       - name: Run Garmin Sync
         run: |
           python scripts/garmin/garmin_sync_coros.py
+      - name: Run Garmin Global Sync
+        continue-on-error: true
+        run: |
+          python scripts/garmin/garmin_sync_global.py
       - name: Push new cookie
         run: |
           git config --local user.email "${{ env.GITHUB_EMAIL }}"
