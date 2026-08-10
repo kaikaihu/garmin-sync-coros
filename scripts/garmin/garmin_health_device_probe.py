@@ -54,16 +54,24 @@ def main():
     region = os.getenv("GARMIN_PROBE_REGION", "").strip().upper()
     email = os.getenv("GARMIN_PROBE_EMAIL", "").strip()
     password = os.getenv("GARMIN_PROBE_PASSWORD", "")
+    garth_token = os.getenv("GARMIN_PROBE_GARTH_TOKEN", "").strip()
 
     if region not in {"CN", "GLOBAL"}:
         print("GARMIN_PROBE_REGION must be CN or GLOBAL")
         return 2
-    if not email or not password:
-        print("Missing GARMIN_PROBE_EMAIL or GARMIN_PROBE_PASSWORD")
+    if not garth_token:
+        print("Missing GARMIN_PROBE_GARTH_TOKEN")
         return 2
 
     auth_domain = "CN" if region == "CN" else ""
-    client = GarminClient(email, password, auth_domain, 1)
+    client = GarminClient(
+        email,
+        password,
+        auth_domain,
+        1,
+        garth_token=garth_token or None,
+        allow_password_login=False,
+    )
 
     try:
         devices = client.connectapi(path=DEVICES_PATH)

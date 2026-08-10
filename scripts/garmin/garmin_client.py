@@ -12,11 +12,23 @@ logger = logging.getLogger(__name__)
 
 
 class GarminClient:
-  def __init__(self, email, password, auth_domain, newest_num):
+  def __init__(
+      self,
+      email,
+      password,
+      auth_domain,
+      newest_num,
+      garth_token=None,
+      allow_password_login=True,
+      garth_client=None,
+  ):
         self.auth_domain = auth_domain
         self.email = email
         self.password = password
-        self.garthClient = garth
+        self.garthClient = garth_client or garth
+        self.garth_token = garth_token
+        self.allow_password_login = allow_password_login
+        self._token_load_attempted = False
         self.newestNum = int(newest_num)
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
@@ -24,20 +36,43 @@ class GarminClient:
             "nk": "NT"
         }
   
-  ## 登录装饰器
-  def login(func):    
-    def ware(self, *args, **kwargs):    
+  def _authenticate(self):
       try:
-         garth.client.username
+          self.garthClient.client.username
+          return
       except Exception:
-        logger.warning("Garmin is not logging in or the token has expired.")
-        if self.auth_domain and str(self.auth_domain).upper() == "CN":
-          self.garthClient.configure(domain="garmin.cn")
-        self.garthClient.login(self.email, self.password)
-        
-        # del self.garthClient.sess.headers['User-Agent']
-        del self.garthClient.client.sess.headers['User-Agent']
+          logger.warning("Garmin is not logging in or the token has expired.")
 
+      if self.garth_token and not self._token_load_attempted:
+          self._token_load_attempted = True
+          try:
+              self.garthClient.loads(self.garth_token)
+              self.garthClient.client.username
+              return
+          except Exception as err:
+              if not self.allow_password_login:
+                  raise GarminSessionUnavailableError(
+                      "Stored Garmin session could not be restored. "
+                      "Refusing password login because it is disabled."
+                  ) from err
+
+      if not self.allow_password_login:
+          raise GarminSessionUnavailableError(
+              "No reusable Garmin session is available. "
+              "Refusing password login because it is disabled."
+          )
+
+      if self.auth_domain and str(self.auth_domain).upper() == "CN":
+          self.garthClient.configure(domain="garmin.cn")
+      self.garthClient.login(self.email, self.password)
+
+      headers = self.garthClient.client.sess.headers
+      headers.pop("User-Agent", None)
+
+  ## 登录装饰器
+  def login(func):
+    def ware(self, *args, **kwargs):
+      self._authenticate()
       return func(self, *args, **kwargs)
     return ware
   
@@ -146,3 +181,7 @@ class GarminNoLoginException(Exception):
         """Initialize."""
         super(GarminNoLoginException, self).__init__(status)
         self.status = status
+
+
+class GarminSessionUnavailableError(Exception):
+    """Raised when a token-only job has no usable Garmin session."""
