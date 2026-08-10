@@ -46,7 +46,7 @@ class GarminClient:
       if self.garth_token and not self._token_load_attempted:
           self._token_load_attempted = True
           try:
-              self.garthClient.loads(self.garth_token)
+              self.garthClient.client.loads(self.garth_token)
               self.garthClient.client.username
               return
           except Exception as err:
