@@ -25,8 +25,9 @@ class FakeGarth:
         self.loads_calls = []
         self.login_calls = []
         self.configure_calls = []
+        self.client.loads = self._loads
 
-    def loads(self, token):
+    def _loads(self, token):
         self.loads_calls.append(token)
         if self.loads_error:
             raise self.loads_error
