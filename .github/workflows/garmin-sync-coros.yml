@@ -46,6 +46,13 @@ jobs:
       - name: Run Garmin Sync
         run: |
           python scripts/garmin/garmin_sync_coros.py
+      - name: Run Garmin Global Sync
+        continue-on-error: true
+        env:
+          GARMIN_GLOBAL_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
+          GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+        run: |
+          python scripts/garmin/garmin_sync_global.py
       - name: Push new cookie
         run: |
           git config --local user.email "${{ env.GITHUB_EMAIL }}"
