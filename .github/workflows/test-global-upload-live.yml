@@ -1,0 +1,28 @@
+name: test-global-upload-live
+
+on:
+  push:
+    branches:
+      - feat/garmin-global-sync
+    paths:
+      - '.github/workflows/test-global-upload-live.yml'
+
+jobs:
+  live-upload-test:
+    runs-on: ubuntu-latest
+    env:
+      GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+      GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Download latest CN activity and upload to Garmin Global
+        run: |
+          python scripts/garmin/test_global_upload_same_credentials.py
