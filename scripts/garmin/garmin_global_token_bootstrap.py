@@ -7,7 +7,10 @@ import garth
 
 def create_token(email, password, garth_client=garth):
     garth_client.login(email, password)
-    return garth_client.dumps()
+    serializer = getattr(garth_client, "dumps", None)
+    if serializer is None:
+        serializer = garth_client.client.dumps
+    return serializer()
 
 
 def main():
