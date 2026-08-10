@@ -1,0 +1,37 @@
+name: probe-garmin-health-devices
+
+on:
+  push:
+    branches:
+      - probe/garmin-health-devices
+    paths:
+      - 'tests/test_garmin_health_device_probe.py'
+      - 'scripts/garmin/garmin_health_device_probe.py'
+      - '.github/workflows/probe-garmin-health-devices.yml'
+
+jobs:
+  test-and-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Unit test redaction
+        run: python -m unittest tests/test_garmin_health_device_probe.py -v
+      - name: Probe Garmin CN devices (read-only)
+        env:
+          GARMIN_PROBE_REGION: CN
+          GARMIN_PROBE_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PROBE_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+        run: python scripts/garmin/garmin_health_device_probe.py
+      - name: Probe Garmin Global devices (read-only)
+        env:
+          GARMIN_PROBE_REGION: GLOBAL
+          GARMIN_PROBE_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
+          GARMIN_PROBE_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+        run: python scripts/garmin/garmin_health_device_probe.py
