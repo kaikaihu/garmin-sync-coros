@@ -32,7 +32,21 @@ GARMIN_GLOBAL_GARTH_TOKEN=<printed value>
 
 The bootstrap script intentionally prints the token only to the local terminal. Do not run it in GitHub Actions and do not commit the value.
 
-### 3. FIT has published health message definitions, but no public Garmin Connect ingest contract
+### 3. Token-only Global probe is reproducible; the Global account has no wearable identity
+
+The token-only workflow run [31380333016](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/31380333016) completed successfully on 2026-08-10. It did not attempt password OAuth and therefore did not revisit the prior `429` path.
+
+The read-only responses were:
+
+- registered device count: `0`
+- primary training device: empty
+- last-used device: empty
+
+During the work, the implementation was corrected to call `garth.client.loads()` (the public API) and to avoid using the unrelated profile endpoint as a session preflight. The device endpoint itself is therefore the evidence here, not a failed login or an inferred device state.
+
+This is the current hard gate for any wellness import experiment: there is no Garmin Global wearable/device identity to associate with Monitoring, Sleep, Metrics, HRV, stress, or Body Battery data. No synthetic FIT or wellness payload was uploaded.
+
+### 4. FIT has published health message definitions, but no public Garmin Connect ingest contract
 
 Garmin's published FIT Profile contains these monitoring/health messages:
 
@@ -53,10 +67,10 @@ However, the public Garmin FIT documentation exposes upload examples for Activit
 
 ## Next experiment gate
 
-1. Add `GARMIN_GLOBAL_GARTH_TOKEN` and dispatch this branch's probe.
-2. Verify whether Garmin Global has a registered wearable/primary wearable identity.
-3. If it does, capture the exact schema of a real exported wellness FIT from the source device before considering any write experiment.
-4. Do not submit a synthetic health FIT until both the device identity and exact ingest contract are independently observed. The first possible write candidate must be separately approved and limited to one date with a documented rollback path.
+1. Associate a legitimate Garmin wearable with the Garmin Global account, then rerun the same token-only device probe and require a non-empty primary wearable result.
+2. Capture the exact schema of a real wellness FIT from that device before considering any write experiment.
+3. Independently observe the device's real upload/ingest transaction; public documentation does not publish a supported wellness import endpoint.
+4. Do not submit a synthetic health FIT until the device identity and exact ingest contract are both observed. Any future first write requires separate approval and must be limited to one date with a documented rollback path.
 
 ## Public sources
 
