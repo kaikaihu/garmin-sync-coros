@@ -91,7 +91,9 @@ class GarminClientSessionTests(unittest.TestCase):
             garth_client=garth,
         )
 
-        with self.assertRaises(GarminSessionUnavailableError):
+        with self.assertRaisesRegex(
+            GarminSessionUnavailableError, "ValueError"
+        ):
             client.connectapi("/device-service/deviceregistration/devices")
 
         self.assertEqual(garth.loads_calls, ["bad-token"])
