@@ -47,6 +47,8 @@ class GarminClient:
           self._token_load_attempted = True
           try:
               self.garthClient.client.loads(self.garth_token)
+              if self.garthClient.client.oauth1_token is None:
+                  raise GarminOAuth1MissingError()
               self.garthClient.client.username
               return
           except Exception as err:
@@ -186,3 +188,7 @@ class GarminNoLoginException(Exception):
 
 class GarminSessionUnavailableError(Exception):
     """Raised when a token-only job has no usable Garmin session."""
+
+
+class GarminOAuth1MissingError(Exception):
+    """Raised when a restored Garmin session has no OAuth1 credential."""
