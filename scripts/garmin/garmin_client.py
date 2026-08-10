@@ -53,6 +53,7 @@ class GarminClient:
               if not self.allow_password_login:
                   raise GarminSessionUnavailableError(
                       "Stored Garmin session could not be restored. "
+                      f"Reason: {type(err).__name__}. "
                       "Refusing password login because it is disabled."
                   ) from err
 
