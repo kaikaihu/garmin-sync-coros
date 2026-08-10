@@ -1,5 +1,8 @@
+import os
 import unittest
+from unittest.mock import patch
 
+from scripts.garmin import garmin_health_device_probe
 from scripts.garmin.garmin_health_device_probe import redact_sensitive
 
 
@@ -29,6 +32,29 @@ class GarminHealthDeviceProbeTests(unittest.TestCase):
         self.assertEqual(redacted["productId"], 9999)
         self.assertEqual(redacted["nested"]["status"], "ACTIVE")
         self.assertEqual(redacted["items"][0]["deviceType"], "WATCH")
+
+    @patch("scripts.garmin.garmin_health_device_probe.GarminClient")
+    def test_global_probe_uses_supplied_session_token_with_password_login_disabled(
+        self, client_class
+    ):
+        client_class.return_value.connectapi.side_effect = [[], {}, {}]
+        environment = {
+            "GARMIN_PROBE_REGION": "GLOBAL",
+            "GARMIN_PROBE_GARTH_TOKEN": "serialized-token",
+        }
+
+        with patch.dict(os.environ, environment, clear=True):
+            result = garmin_health_device_probe.main()
+
+        self.assertEqual(result, 0)
+        client_class.assert_called_once_with(
+            "",
+            "",
+            "",
+            1,
+            garth_token="serialized-token",
+            allow_password_login=False,
+        )
 
 
 if __name__ == "__main__":

@@ -1,17 +1,24 @@
 name: probe-garmin-health-devices
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - probe/garmin-health-devices
+      - research/garmin-cn-global-health
     paths:
+      - 'tests/test_garmin_client_session.py'
+      - 'tests/test_garmin_global_token_bootstrap.py'
       - 'tests/test_garmin_health_device_probe.py'
+      - 'scripts/garmin/garmin_client.py'
+      - 'scripts/garmin/garmin_global_token_bootstrap.py'
       - 'scripts/garmin/garmin_health_device_probe.py'
       - '.github/workflows/probe-garmin-health-devices.yml'
 
 jobs:
   test-and-probe:
     runs-on: ubuntu-latest
+    env:
+      GARMIN_GLOBAL_GARTH_TOKEN: ${{ secrets.GARMIN_GLOBAL_GARTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,16 +29,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Unit test redaction
-        run: python -m unittest tests/test_garmin_health_device_probe.py -v
-      - name: Probe Garmin CN devices (read-only)
-        env:
-          GARMIN_PROBE_REGION: CN
-          GARMIN_PROBE_EMAIL: ${{ secrets.GARMIN_EMAIL }}
-          GARMIN_PROBE_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
-        run: python scripts/garmin/garmin_health_device_probe.py
-      - name: Probe Garmin Global devices (read-only)
+        run: |
+          python -m unittest \
+            tests/test_garmin_client_session.py \
+            tests/test_garmin_global_token_bootstrap.py \
+            tests/test_garmin_health_device_probe.py -v
+      - name: Probe Garmin Global devices (read-only, token only)
+        if: ${{ env.GARMIN_GLOBAL_GARTH_TOKEN != '' }}
         env:
           GARMIN_PROBE_REGION: GLOBAL
-          GARMIN_PROBE_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
-          GARMIN_PROBE_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+          GARMIN_PROBE_GARTH_TOKEN: ${{ env.GARMIN_GLOBAL_GARTH_TOKEN }}
         run: python scripts/garmin/garmin_health_device_probe.py
+      - name: Explain skipped Global probe
+        if: ${{ env.GARMIN_GLOBAL_GARTH_TOKEN == '' }}
+        run: |
+          echo "GARMIN_GLOBAL_GARTH_TOKEN is not configured."
+          echo "The probe intentionally skips instead of attempting password login."
