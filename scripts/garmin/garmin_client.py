@@ -29,6 +29,7 @@ class GarminClient:
         self.garth_token = garth_token
         self.allow_password_login = allow_password_login
         self._token_load_attempted = False
+        self._token_session_loaded = False
         self.newestNum = int(newest_num)
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
@@ -37,6 +38,9 @@ class GarminClient:
         }
   
   def _authenticate(self):
+      if self._token_session_loaded:
+          return
+
       try:
           self.garthClient.client.username
           return
@@ -49,7 +53,7 @@ class GarminClient:
               self.garthClient.client.loads(self.garth_token)
               if self.garthClient.client.oauth1_token is None:
                   raise GarminOAuth1MissingError()
-              self.garthClient.client.username
+              self._token_session_loaded = True
               return
           except Exception as err:
               if not self.allow_password_login:

@@ -20,10 +20,13 @@ class FakeGarthClientState:
 
 
 class FakeGarth:
-    def __init__(self, loads_error=None, missing_oauth1=False):
+    def __init__(
+        self, loads_error=None, missing_oauth1=False, profile_unavailable=False
+    ):
         self.client = FakeGarthClientState()
         self.loads_error = loads_error
         self.missing_oauth1 = missing_oauth1
+        self.profile_unavailable = profile_unavailable
         self.loads_calls = []
         self.login_calls = []
         self.configure_calls = []
@@ -33,7 +36,8 @@ class FakeGarth:
         self.loads_calls.append(token)
         if self.loads_error:
             raise self.loads_error
-        self.client._username = "token-user"
+        if not self.profile_unavailable:
+            self.client._username = "token-user"
         if not self.missing_oauth1:
             self.client.oauth1_token = object()
 
@@ -45,7 +49,10 @@ class FakeGarth:
         self.configure_calls.append(kwargs)
 
     def connectapi(self, path, **kwargs):
-        return {"path": path, "username": self.client.username}
+        result = {"path": path}
+        if not self.profile_unavailable:
+            result["username"] = self.client.username
+        return result
 
 
 class GarminClientSessionTests(unittest.TestCase):
@@ -120,6 +127,24 @@ class GarminClientSessionTests(unittest.TestCase):
         ):
             client.connectapi("/device-service/deviceregistration/devices")
 
+        self.assertEqual(garth.login_calls, [])
+
+    def test_token_loaded_session_does_not_require_profile_endpoint_before_device_request(self):
+        garth = FakeGarth(profile_unavailable=True)
+        client = GarminClient(
+            "user@example.com",
+            "password",
+            "",
+            1,
+            garth_token="serialized-token",
+            allow_password_login=False,
+            garth_client=garth,
+        )
+
+        result = client.connectapi("/device-service/deviceregistration/devices")
+
+        self.assertEqual(result["path"], "/device-service/deviceregistration/devices")
+        self.assertEqual(garth.loads_calls, ["serialized-token"])
         self.assertEqual(garth.login_calls, [])
 
 
