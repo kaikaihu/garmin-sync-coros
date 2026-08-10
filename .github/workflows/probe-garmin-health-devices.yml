@@ -1,4 +1,5 @@
 name: probe-garmin-health-devices
+run-name: Token-only Global device probe
 
 on:
   workflow_dispatch:
