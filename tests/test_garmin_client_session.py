@@ -20,7 +20,7 @@ class FakeGarthClientState:
 
 
 class FakeGarth:
-    def __init__(self, loads_error=None, missing_oauth1=False):
+    def __init__(self, loads_error=None, missing_oauth1=False, profile_unavailable=False):
         self.client = FakeGarthClientState()
         self.loads_error = loads_error
         self.missing_oauth1 = missing_oauth1
