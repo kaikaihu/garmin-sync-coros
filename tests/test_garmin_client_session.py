@@ -9,6 +9,7 @@ from scripts.garmin.garmin_client import (
 class FakeGarthClientState:
     def __init__(self):
         self._username = None
+        self.oauth1_token = None
         self.sess = type("Session", (), {"headers": {"User-Agent": "test"}})()
 
     @property
@@ -19,9 +20,10 @@ class FakeGarthClientState:
 
 
 class FakeGarth:
-    def __init__(self, loads_error=None):
+    def __init__(self, loads_error=None, missing_oauth1=False):
         self.client = FakeGarthClientState()
         self.loads_error = loads_error
+        self.missing_oauth1 = missing_oauth1
         self.loads_calls = []
         self.login_calls = []
         self.configure_calls = []
@@ -32,6 +34,8 @@ class FakeGarth:
         if self.loads_error:
             raise self.loads_error
         self.client._username = "token-user"
+        if not self.missing_oauth1:
+            self.client.oauth1_token = object()
 
     def login(self, email, password):
         self.login_calls.append((email, password))
