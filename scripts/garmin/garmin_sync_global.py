@@ -9,7 +9,7 @@ if SCRIPTS_DIR not in sys.path:
     sys.path.append(SCRIPTS_DIR)
 
 from config import GARMIN_FIT_DIR
-from garmin.garmin_client import GarminClient
+from garmin.garmin_global_client import create_global_uploader
 
 SUCCESS_STATUSES = {"SUCCESS", "DUPLICATE_ACTIVITY"}
 
@@ -104,7 +104,8 @@ def main():
         )
         return 2
 
-    uploader = GarminClient(email, password, "", 1)
+    token_dir = os.getenv("GARMIN_GLOBAL_TOKEN_DIR", "/tmp/garmin-global-tokens")
+    uploader = create_global_uploader(email, password, token_dir)
     result = sync_zip_files(GARMIN_FIT_DIR, uploader)
 
     print(
