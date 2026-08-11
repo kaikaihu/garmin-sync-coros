@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import tempfile
@@ -10,6 +11,7 @@ if SCRIPTS_DIR not in sys.path:
 
 from config import GARMIN_FIT_DIR
 from garmin.garmin_global_client import create_global_uploader
+from garmin.garmin_global_queue import GlobalSyncState
 
 SUCCESS_STATUSES = {"SUCCESS", "DUPLICATE_ACTIVITY"}
 
@@ -41,23 +43,15 @@ def extract_fit_files(zip_path, output_dir):
     return extracted
 
 
-def sync_zip_files(zip_dir, uploader):
-    """Upload all FIT activities found in ZIP files from the current run."""
+def sync_entries(entries, uploader, state=None):
     result = {"total": 0, "succeeded": 0, "failed": 0}
 
-    if not os.path.isdir(zip_dir):
-        print(f"Garmin FIT directory does not exist: {zip_dir}")
-        return result
-
-    zip_paths = sorted(
-        os.path.join(zip_dir, name)
-        for name in os.listdir(zip_dir)
-        if name.lower().endswith(".zip")
-    )
-
     with tempfile.TemporaryDirectory(prefix="garmin-global-") as temp_dir:
-        for zip_index, zip_path in enumerate(zip_paths):
-            extract_dir = os.path.join(temp_dir, str(zip_index))
+        for index, entry in enumerate(entries):
+            activity_id = entry.get("activity_id")
+            zip_path = entry["zip_path"]
+            extract_dir = os.path.join(temp_dir, str(index))
+
             try:
                 fit_paths = extract_fit_files(zip_path, extract_dir)
             except Exception as err:
@@ -70,27 +64,50 @@ def sync_zip_files(zip_dir, uploader):
                 result["failed"] += 1
                 continue
 
+            activity_ok = True
             for fit_path in fit_paths:
                 result["total"] += 1
                 try:
                     status = uploader.upload_activity(fit_path)
                     if status in SUCCESS_STATUSES:
                         result["succeeded"] += 1
-                        print(f"Garmin Global upload {status}: {os.path.basename(fit_path)}")
+                        print(
+                            f"Garmin Global upload {status}: "
+                            f"{os.path.basename(fit_path)}"
+                        )
                     else:
+                        activity_ok = False
                         result["failed"] += 1
                         print(
                             f"Garmin Global upload failed ({status}): "
                             f"{os.path.basename(fit_path)}"
                         )
                 except Exception as err:
+                    activity_ok = False
                     result["failed"] += 1
                     print(
                         f"Garmin Global upload exception for "
                         f"{os.path.basename(fit_path)}: {err}"
                     )
 
+            if activity_ok and activity_id is not None and state is not None:
+                state.mark_synced(activity_id)
+
     return result
+
+
+def sync_zip_files(zip_dir, uploader):
+    """Backward-compatible current-run upload path."""
+    if not os.path.isdir(zip_dir):
+        print(f"Garmin FIT directory does not exist: {zip_dir}")
+        return {"total": 0, "succeeded": 0, "failed": 0}
+
+    entries = [
+        {"zip_path": os.path.join(zip_dir, name)}
+        for name in sorted(os.listdir(zip_dir))
+        if name.lower().endswith(".zip")
+    ]
+    return sync_entries(entries, uploader)
 
 
 def main():
@@ -105,8 +122,21 @@ def main():
         return 2
 
     token_dir = os.getenv("GARMIN_GLOBAL_TOKEN_DIR", "/tmp/garmin-global-tokens")
+    manifest_path = os.getenv(
+        "GARMIN_GLOBAL_MANIFEST_PATH",
+        "/tmp/garmin-global-manifest.json",
+    )
+
     uploader = create_global_uploader(email, password, token_dir)
-    result = sync_zip_files(GARMIN_FIT_DIR, uploader)
+
+    if os.path.exists(manifest_path):
+        with open(manifest_path, "r", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        state = GlobalSyncState(manifest["state_path"])
+        result = sync_entries(manifest.get("activities", []), uploader, state)
+    else:
+        print("Garmin Global manifest missing; using current-run ZIP fallback.")
+        result = sync_zip_files(GARMIN_FIT_DIR, uploader)
 
     print(
         "Garmin Global sync summary: "
