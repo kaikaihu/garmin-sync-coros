@@ -2,6 +2,11 @@ name: garmin-sync-coros
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/garmin-sync-coros.yml'
   schedule:
     - cron: '0 1,7,14 * * ?'
 env:
