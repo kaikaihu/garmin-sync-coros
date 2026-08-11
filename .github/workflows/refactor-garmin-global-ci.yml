@@ -6,6 +6,7 @@ on:
       - refactor/isolate-garmin-global
 
 # Temporary CI used only while isolating the Garmin Global sidecar.
+# GREEN check: validates the moved package and a real Global login/upload pass.
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
