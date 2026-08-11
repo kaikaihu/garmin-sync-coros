@@ -4,9 +4,9 @@ import tempfile
 import unittest
 
 
-class GarminGlobalQueueTests(unittest.TestCase):
+class GarminGlobalStateTests(unittest.TestCase):
     def test_first_run_only_bootstraps_one_page(self):
-        from scripts.garmin.garmin_global_queue import discover_pending_ids
+        from scripts.garmin_global.state import discover_pending_ids
 
         calls = []
 
@@ -24,7 +24,7 @@ class GarminGlobalQueueTests(unittest.TestCase):
         self.assertEqual(calls, [(0, 3)])
 
     def test_scans_until_it_reaches_a_previously_synced_activity(self):
-        from scripts.garmin.garmin_global_queue import discover_pending_ids
+        from scripts.garmin_global.state import discover_pending_ids
 
         pages = {
             0: [{"activityId": 50}, {"activityId": 40}],
@@ -40,7 +40,7 @@ class GarminGlobalQueueTests(unittest.TestCase):
         self.assertEqual(pending, [50, 40, 30])
 
     def test_state_persists_only_successful_activity_ids(self):
-        from scripts.garmin.garmin_global_queue import GlobalSyncState
+        from scripts.garmin_global.state import GlobalSyncState
 
         with tempfile.TemporaryDirectory() as temp_dir:
             path = os.path.join(temp_dir, "state.json")

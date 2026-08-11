@@ -9,7 +9,7 @@ if SCRIPTS_DIR not in sys.path:
 
 from config import DB_DIR, GARMIN_FIT_DIR
 from garmin.garmin_client import GarminClient
-from garmin.garmin_global_queue import GlobalSyncState, discover_pending_ids
+from garmin_global.state import GlobalSyncState, discover_pending_ids
 
 
 def _int_env(name, default):

@@ -10,8 +10,8 @@ if SCRIPTS_DIR not in sys.path:
     sys.path.append(SCRIPTS_DIR)
 
 from config import GARMIN_FIT_DIR
-from garmin.garmin_global_client import create_global_uploader
-from garmin.garmin_global_queue import GlobalSyncState
+from garmin_global.client import create_global_uploader
+from garmin_global.state import GlobalSyncState
 
 SUCCESS_STATUSES = {"SUCCESS", "DUPLICATE_ACTIVITY"}
 

@@ -3,7 +3,7 @@ import unittest
 
 class GarminGlobalClientTests(unittest.TestCase):
     def test_create_client_uses_global_mode_and_tokenstore(self):
-        from scripts.garmin.garmin_global_client import create_global_client
+        from scripts.garmin_global.client import create_global_client
 
         calls = {}
 
