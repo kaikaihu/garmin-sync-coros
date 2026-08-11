@@ -6,7 +6,7 @@ on:
       - fix/garmin-global-429
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,3 +15,30 @@ jobs:
           python-version: '3.10'
       - name: Run Garmin Global unit test
         run: python -m unittest tests/test_garmin_global_client.py
+
+  live-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Garmin Global dependencies
+        run: pip install -r requirements-global.txt
+      - name: Login to Garmin Global with modern auth
+        env:
+          GARMIN_GLOBAL_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
+          GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import os
+          from scripts.garmin.garmin_global_client import create_global_client
+
+          client = create_global_client(
+              os.environ['GARMIN_GLOBAL_EMAIL'],
+              os.environ['GARMIN_GLOBAL_PASSWORD'],
+              '/tmp/garmin-global-auth-probe',
+          )
+          print('GARMIN_GLOBAL_LOGIN_OK')
+          print('PROFILE_LOADED=' + str(bool(getattr(client, 'display_name', None))))
+          PY
