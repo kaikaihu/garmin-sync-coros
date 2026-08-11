@@ -1,0 +1,79 @@
+name: garmin-sync-global
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run shortly after Garmin -> COROS to avoid concurrent state pushes.
+    - cron: '5 1,7,14 * * *'
+
+env:
+  GITHUB_NAME: kaikaihu
+  GITHUB_EMAIL: hu_kai@outlook.com
+  GARMIN_AUTH_DOMAIN: ${{ secrets.GARMIN_AUTH_DOMAIN }}
+  GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+  GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+
+concurrency:
+  group: garmin-sync-global
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.10 for Garmin CN
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install Garmin CN dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Prepare Garmin Global Sync
+        run: |
+          python scripts/garmin_global/prepare.py
+
+      - name: Set up Python 3.12 for Garmin Global
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements-global.txt
+
+      - name: Install Garmin Global dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-global.txt
+
+      - name: Run Garmin Global Sync
+        env:
+          GARMIN_GLOBAL_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
+          GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+        run: |
+          python scripts/garmin_global/sync.py
+
+      - name: Persist Garmin Global sync state
+        if: always()
+        run: |
+          if git diff --quiet -- db/garmin_global_state.json; then
+            echo "No Garmin Global state changes to persist"
+            exit 0
+          fi
+          git config --local user.email "${{ env.GITHUB_EMAIL }}"
+          git config --local user.name "${{ env.GITHUB_NAME }}"
+          git add db/garmin_global_state.json
+          git commit -m 'update garmin global state'
+          git fetch origin "${GITHUB_REF_NAME}"
+          git rebase "origin/${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

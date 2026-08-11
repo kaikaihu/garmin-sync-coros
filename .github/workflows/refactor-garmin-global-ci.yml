@@ -18,3 +18,38 @@ jobs:
       - name: Run Garmin Global unit tests
         run: |
           python -m unittest discover -s scripts/tests/garmin_global -p 'test_*.py' -v
+
+  integration:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10 for Garmin CN
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install Garmin CN dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Prepare Garmin Global Sync
+        env:
+          GARMIN_AUTH_DOMAIN: ${{ secrets.GARMIN_AUTH_DOMAIN }}
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+        run: |
+          python scripts/garmin_global/prepare.py
+      - name: Set up Python 3.12 for Garmin Global
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Garmin Global dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-global.txt
+      - name: Run Garmin Global Sync
+        env:
+          GARMIN_GLOBAL_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
+          GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
+        run: |
+          python scripts/garmin_global/sync.py

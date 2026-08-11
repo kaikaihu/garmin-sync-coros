@@ -46,34 +46,6 @@ jobs:
       - name: Run Garmin Sync
         run: |
           python scripts/garmin/garmin_sync_coros.py
-
-      # Garmin Global is an independent sidecar. It prepares its own retry queue
-      # while the original Python 3.10 Garmin CN dependencies are still active.
-      - name: Prepare Garmin Global Sync
-        continue-on-error: true
-        run: |
-          python scripts/garmin/garmin_global_prepare.py
-
-      # Modern Garmin Global auth requires Python 3.12 and is intentionally
-      # isolated from the original Garmin -> COROS dependency set.
-      - name: Set up Python 3.12 for Garmin Global
-        continue-on-error: true
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install Garmin Global dependencies
-        continue-on-error: true
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-global.txt
-      - name: Run Garmin Global Sync
-        continue-on-error: true
-        env:
-          GARMIN_GLOBAL_EMAIL: ${{ secrets.GARMIN_GLOBAL_EMAIL }}
-          GARMIN_GLOBAL_PASSWORD: ${{ secrets.GARMIN_GLOBAL_PASSWORD }}
-        run: |
-          python scripts/garmin/garmin_sync_global.py
-
       - name: Push new cookie
         run: |
           git config --local user.email "${{ env.GITHUB_EMAIL }}"
