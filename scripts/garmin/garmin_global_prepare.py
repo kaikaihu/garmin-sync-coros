@@ -28,7 +28,7 @@ def main():
         print("Missing Garmin CN credentials for Garmin Global queue preparation.")
         return 2
 
-    page_size = _int_env("GARMIN_GLOBAL_PAGE_SIZE", 20)
+    page_size = _int_env("GARMIN_GLOBAL_PAGE_SIZE", 5)
     max_pages = _int_env("GARMIN_GLOBAL_MAX_SCAN_PAGES", 50)
     max_retry = _int_env("GARMIN_GLOBAL_MAX_RETRY_PER_RUN", 20)
 
