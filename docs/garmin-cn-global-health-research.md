@@ -50,6 +50,8 @@ On 2026-08-17, after a wearable was associated with the Global account, the same
 
 Later on the same date, a fresh local bootstrap reached the same OAuth1-preauthorization endpoint but received HTTP `429` after the SSO ticket was issued. This rules out a GitHub-runner-only block and a bad password. The installed garth `0.4.47` used the default `GCM-iOS-5.7.2.1` User-Agent; current public garth discussion reports that Garmin/Cloudflare may block this default client signature at the same stage. The bootstrap script now sets a normal desktop-browser User-Agent before its one local login attempt, while the runner remains token-only. This is a compatibility mitigation, not proof that it overrides a genuine account rate limit: stop retries after `429`, allow the account to cool down, then make at most one fresh bootstrap attempt.
 
+The browser-User-Agent retry also received `429` at the identical endpoint. The current boundary is therefore stronger: no tested `garth` password-bootstrap variant can obtain a new OAuth1 session for this Global account while Garmin is rejecting the preauthorization exchange. The script now exits with temporary-failure code `75` and a stop/retry-later message for this case instead of printing a retry stack trace. This does not change production sync or initiate any password login from GitHub Actions.
+
 ### 4. FIT has published health message definitions, but no public Garmin Connect ingest contract
 
 Garmin's published FIT Profile contains these monitoring/health messages:

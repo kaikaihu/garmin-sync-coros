@@ -1,5 +1,8 @@
+import io
 import unittest
+from unittest.mock import patch
 
+from scripts.garmin import garmin_global_token_bootstrap
 from scripts.garmin.garmin_global_token_bootstrap import create_token
 
 
@@ -67,6 +70,27 @@ class GarminGlobalTokenBootstrapTests(unittest.TestCase):
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/131.0.0.0 Safari/537.36",
         )
+
+    def test_main_stops_cleanly_when_garmin_rate_limits_login(self):
+        with (
+            patch("builtins.input", return_value="user@example.com"),
+            patch(
+                "scripts.garmin.garmin_global_token_bootstrap.getpass",
+                return_value="password",
+            ),
+            patch(
+                "scripts.garmin.garmin_global_token_bootstrap.create_token",
+                side_effect=RuntimeError("too many 429 error responses"),
+            ),
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+        ):
+            try:
+                result = garmin_global_token_bootstrap.main()
+            except RuntimeError:
+                result = 1
+
+        self.assertEqual(result, 75)
+        self.assertIn("Stop retrying", stdout.getvalue())
 
 
 if __name__ == "__main__":

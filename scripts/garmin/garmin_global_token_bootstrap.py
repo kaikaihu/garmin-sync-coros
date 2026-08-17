@@ -29,7 +29,17 @@ def main():
         print("Email and password are required.")
         return 2
 
-    token = create_token(email, password)
+    try:
+        token = create_token(email, password)
+    except Exception as err:
+        if "429" not in str(err):
+            raise
+        print(
+            "Garmin Global login received HTTP 429. Stop retrying; "
+            "wait for Garmin to clear the rate limit before one later attempt."
+        )
+        return 75
+
     print("\nAdd this value to the GitHub Actions secret GARMIN_GLOBAL_GARTH_TOKEN:")
     print(token)
     return 0
