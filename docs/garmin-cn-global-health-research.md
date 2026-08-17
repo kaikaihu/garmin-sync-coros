@@ -82,6 +82,14 @@ An independently implemented, read-only decoder documents Garmin Connect's per-d
 
 The decoder also labels some nightly fields as undocumented/`unknown_<number>` when using its parser. This is useful evidence for the exact *exported* file family, but it is not proof of a supported upload schema or an ingest endpoint. In particular, a valid FIT encoder and a file that can be exported/downloaded do not imply that Garmin Global will accept it as device-originated wellness data.
 
+### 6. Direct Global wellness export after device association: Metrics only
+
+On 2026-08-17, the Garmin Global account was signed into through the official web UI and used the official **Export Wellness Data** control for that date. The downloaded ZIP was a valid archive containing 30 `*_METRICS.fit` files (9.4 KB uncompressed total). It contained no `*_WELLNESS.fit`, `*_SLEEP_DATA.fit`, `*_HRV_STATUS.fit`, or other sleep/monitoring file.
+
+Offline parsing (with no identifiers retained in this repository) found `file_id`, `file_creator`, `device_info`, and several currently unnamed FIT messages. Twenty-eight files shared one `file_id → file_creator → device_info → unknown_241 → unknown_294 → unknown_232 → unknown_378 → unknown_339` message sequence; the two remaining files had related, smaller Metrics-only sequences. These filenames use internal numeric source identifiers, so the count of 30 does **not** prove that there are 30 active watches.
+
+This directly confirms that the official export is a health/wellness export, not an activity export. It also confirms that the new Global association has not yet produced a full day of monitoring, sleep, or HRV data that can serve as a target-side fidelity sample. The downloaded health archive remains only in local temporary storage and is not committed.
+
 ## Next experiment gate
 
 1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` on a trusted local machine, then rerun the same token-only device probe and require a non-empty primary wearable result. The probe must succeed before making any conclusion about the newly associated device.
