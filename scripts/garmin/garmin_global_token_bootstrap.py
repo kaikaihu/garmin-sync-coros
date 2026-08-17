@@ -4,8 +4,17 @@ from getpass import getpass
 
 import garth
 
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
+)
+
 
 def create_token(email, password, garth_client=garth):
+    session = getattr(getattr(garth_client, "client", None), "sess", None)
+    if session is not None:
+        session.headers.update({"User-Agent": BROWSER_USER_AGENT})
     garth_client.login(email, password)
     serializer = getattr(garth_client, "dumps", None)
     if serializer is None:

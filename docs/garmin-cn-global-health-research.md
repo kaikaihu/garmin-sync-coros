@@ -48,6 +48,8 @@ This is the current hard gate for any wellness import experiment: there is no Ga
 
 On 2026-08-17, after a wearable was associated with the Global account, the same workflow was re-run. GitHub Actions received `GARMIN_GLOBAL_GARTH_TOKEN`, did not attempt password OAuth, and then failed in the first read-only device request with `JSONDecodeError: Expecting value` after garth reported that the token was not logged in or had expired. This run does **not** establish whether the new wearable is visible; it establishes only that the stored session must be refreshed before the account/device gate can be evaluated. No device or health-data write occurred.
 
+Later on the same date, a fresh local bootstrap reached the same OAuth1-preauthorization endpoint but received HTTP `429` after the SSO ticket was issued. This rules out a GitHub-runner-only block and a bad password. The installed garth `0.4.47` used the default `GCM-iOS-5.7.2.1` User-Agent; current public garth discussion reports that Garmin/Cloudflare may block this default client signature at the same stage. The bootstrap script now sets a normal desktop-browser User-Agent before its one local login attempt, while the runner remains token-only. This is a compatibility mitigation, not proof that it overrides a genuine account rate limit: stop retries after `429`, allow the account to cool down, then make at most one fresh bootstrap attempt.
+
 ### 4. FIT has published health message definitions, but no public Garmin Connect ingest contract
 
 Garmin's published FIT Profile contains these monitoring/health messages:
@@ -93,3 +95,5 @@ The decoder also labels some nightly fields as undocumented/`unknown_<number>` w
 - Garmin FIT SDK Tools / Profile: https://github.com/garmin/fit-sdk-tools
 - garth 0.4.38 session implementation: https://github.com/matin/garth/blob/0.4.38/garth/http.py
 - Garmin wellness-export FIT decoder and file-family observations: https://github.com/anup-shesh/garmin-local-mcp/blob/main/src/garmin_mcp/fitdecode.py
+- garth discussion of the current User-Agent/Cloudflare login failure: https://github.com/matin/garth/discussions/222
+- independently reported OAuth-preauthorized 429: https://github.com/cyberjunky/python-garminconnect/issues/337
