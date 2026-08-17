@@ -32,7 +32,7 @@ GARMIN_GLOBAL_GARTH_TOKEN=<printed value>
 
 The bootstrap script intentionally prints the token only to the local terminal. Do not run it in GitHub Actions and do not commit the value.
 
-### 3. Token-only Global probe is reproducible; the Global account has no wearable identity
+### 3. Token-only Global probe is reproducible; the original Global account state had no wearable identity
 
 The token-only workflow run [31380333016](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/31380333016) completed successfully on 2026-08-10. It did not attempt password OAuth and therefore did not revisit the prior `429` path.
 
@@ -45,6 +45,8 @@ The read-only responses were:
 During the work, the implementation was corrected to call `garth.client.loads()` (the public API) and to avoid using the unrelated profile endpoint as a session preflight. The device endpoint itself is therefore the evidence here, not a failed login or an inferred device state.
 
 This is the current hard gate for any wellness import experiment: there is no Garmin Global wearable/device identity to associate with Monitoring, Sleep, Metrics, HRV, stress, or Body Battery data. No synthetic FIT or wellness payload was uploaded.
+
+On 2026-08-17, after a wearable was associated with the Global account, the same workflow was re-run. GitHub Actions received `GARMIN_GLOBAL_GARTH_TOKEN`, did not attempt password OAuth, and then failed in the first read-only device request with `JSONDecodeError: Expecting value` after garth reported that the token was not logged in or had expired. This run does **not** establish whether the new wearable is visible; it establishes only that the stored session must be refreshed before the account/device gate can be evaluated. No device or health-data write occurred.
 
 ### 4. FIT has published health message definitions, but no public Garmin Connect ingest contract
 
@@ -65,9 +67,20 @@ The `file` enum also defines `monitoring_a`, `monitoring_daily`, and `monitoring
 
 However, the public Garmin FIT documentation exposes upload examples for Activity, Course, and Workout files only. Garmin's public Health API is device-to-Garmin-Connect-to-partner (read-out), not a documented general-purpose endpoint for writing health data into Connect. The public sources inspected do not identify a supported endpoint, device-authentication contract, or post-upload processing sequence for synthetic Monitoring/Sleep/Metrics FIT.
 
+### 5. A real Garmin Connect daily wellness export uses a multi-FIT bundle
+
+An independently implemented, read-only decoder documents Garmin Connect's per-day **Export Wellness Data** bundle as separate files such as `*_WELLNESS.fit`, `*_SLEEP_DATA.fit`, `*_HRV_STATUS.fit`, `*_SKIN_TEMP.fit`, `*_METRICS.fit`, and `*_NAP.fit`. Its parsing observations are consistent with the published FIT profile for the standard parts:
+
+- `*_WELLNESS.fit` carries standard `monitoring` and `stress_level` messages for all-day heart rate, steps, distance, and stress.
+- `*_SLEEP_DATA.fit` carries a sleep window plus sleep stages and score.
+- `*_HRV_STATUS.fit` carries nightly/weekly HRV summaries and five-minute values.
+- `*_METRICS.fit` contains a device-side resting-HR estimate.
+
+The decoder also labels some nightly fields as undocumented/`unknown_<number>` when using its parser. This is useful evidence for the exact *exported* file family, but it is not proof of a supported upload schema or an ingest endpoint. In particular, a valid FIT encoder and a file that can be exported/downloaded do not imply that Garmin Global will accept it as device-originated wellness data.
+
 ## Next experiment gate
 
-1. Associate a legitimate Garmin wearable with the Garmin Global account, then rerun the same token-only device probe and require a non-empty primary wearable result.
+1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` on a trusted local machine, then rerun the same token-only device probe and require a non-empty primary wearable result. The probe must succeed before making any conclusion about the newly associated device.
 2. Capture the exact schema of a real wellness FIT from that device before considering any write experiment.
 3. Independently observe the device's real upload/ingest transaction; public documentation does not publish a supported wellness import endpoint.
 4. Do not submit a synthetic health FIT until the device identity and exact ingest contract are both observed. Any future first write requires separate approval and must be limited to one date with a documented rollback path.
@@ -79,3 +92,4 @@ However, the public Garmin FIT documentation exposes upload examples for Activit
 - Garmin FIT SDK overview: https://developer.garmin.com/fit/overview/
 - Garmin FIT SDK Tools / Profile: https://github.com/garmin/fit-sdk-tools
 - garth 0.4.38 session implementation: https://github.com/matin/garth/blob/0.4.38/garth/http.py
+- Garmin wellness-export FIT decoder and file-family observations: https://github.com/anup-shesh/garmin-local-mcp/blob/main/src/garmin_mcp/fitdecode.py
