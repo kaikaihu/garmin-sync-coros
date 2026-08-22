@@ -57,6 +57,28 @@
 
 默认分支的健康同步和历史活动补传工作流会固定检出已经验证的研究提交，避免研究分支后续变化自动进入生产。
 
+## GitHub Actions 清理记录
+
+2026-08-22 已禁用 8 个历史测试或只读探测工作流：
+
+- `full-cn-coros-global-test`
+- `garmin-global-live-test`
+- `probe-garmin-health-devices`
+- `refactor-garmin-global-ci`
+- `test-garmin-global-429`
+- `test-garmin-global`
+- `test-global-mapped-secrets`
+- `test-global-upload-live`
+
+当前保留 4 个启用工作流：
+
+- `garmin-sync-coros`
+- `garmin-sync-global`
+- `sync-garmin-cn-health-to-intervals`
+- `backfill-garmin-cn-activities-to-intervals`
+
+旧版反向同步 `coros-sync-garmin` 继续保持手动禁用。GitHub 的历史运行记录和研究分支文件没有删除，以便追溯；所有禁用操作均可恢复。
+
 ## 维护风险
 
 - Garmin Connect 使用私有 API，接口和登录策略可能变化。
