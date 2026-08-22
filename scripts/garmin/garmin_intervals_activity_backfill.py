@@ -31,6 +31,7 @@ TYPE_FAMILIES = {
     "run": "RUN",
     "trail_running": "RUN",
     "trailrun": "RUN",
+    "track_running": "RUN",
     "treadmill_running": "RUN",
     "walking": "WALK",
     "walk": "WALK",
