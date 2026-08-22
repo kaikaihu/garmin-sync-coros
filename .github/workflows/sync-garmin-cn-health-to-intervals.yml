@@ -16,6 +16,9 @@ on:
           - '1'
           - '3'
           - '7'
+          - '22'
+          - '30'
+          - '31'
       dry_run:
         description: 'Read and validate only; do not write Intervals.icu'
         required: true
