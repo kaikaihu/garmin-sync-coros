@@ -130,11 +130,23 @@ One recent peer repository (`lijiehao1/DailySync`) has the same activity-only CN
 
 This narrows the result materially: the known public implementations establish activity transfer only. The health capability seen in the commercial service depends on an unpublished mechanism, not a reusable hidden function in the open repositories examined.
 
+### 10. garth cannot provide a new Global session any more
+
+This branch originally treated a persisted garth OAuth session as the preferred way to avoid repeated password login. That remains correct **only for an already valid saved session**. However, garth's final upstream release (`v0.8.0`, 2026-03-28) now explicitly states that Garmin changed the authentication flow and broke the mobile-auth approach on which garth relies. The library is deprecated and no longer maintained; its release notes say that new logins will not work, while an existing OAuth1 session may work only until that token expires (roughly one year from issuance).
+
+This turns the prior local `429` observations into a verified upstream boundary rather than an implementation bug:
+
+- do not retry `oauth/preauthorized` with password, a different User-Agent, GitHub Actions, or a fresh garth version;
+- an already-valid `GARMIN_GLOBAL_GARTH_TOKEN` can still be used token-only and should never be printed or recreated in CI;
+- the expired stored Global session cannot be refreshed through garth. Upgrading the pinned `0.4.38` package does not solve this, because the successor release declares new login unavailable.
+
+The signed-in browser session is intentionally not a workaround: reading its cookies/local storage to manufacture a command-line credential would expose authentication material and does not establish a supported durable token format.
+
 ## Next experiment gate
 
-1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` only after the account-rate-limit window has cleared, then rerun the same token-only device probe. The web UI confirms an associated primary wearable, but the token-only probe must still succeed before automation relies on it.
+1. Do not attempt a fresh garth password bootstrap. Run the token-only device probe only if a previously valid serialized OAuth1 session already exists in a permitted secret store; the known stored session is expired and cannot be refreshed through garth.
 2. Have the associated Global wearable perform one normal, real sync, then use the official Export Wellness Data control to capture its resulting wellness FIT schema. The China source-side schema is now available; a fresh Global target-side schema is still needed before considering any write experiment.
-3. Independently observe the device's real upload/ingest transaction; public documentation does not publish a supported wellness import endpoint.
+3. Independently observe the device's real upload/ingest transaction; public documentation does not publish a supported wellness import endpoint. This would require a separately approved, privacy-scoped capture plan because the transaction carries account/device identifiers and health data.
 4. Do not submit a synthetic health FIT until the device identity and exact ingest contract are both observed. Any future first write requires separate approval and must be limited to one date with a documented rollback path.
 
 ## Public sources
@@ -150,5 +162,6 @@ This narrows the result materially: the known public implementations establish a
 - Public activity-only CN/Global synchronizer: https://github.com/gooin/dailysync-rev
 - garth 0.4.38 session implementation: https://github.com/matin/garth/blob/0.4.38/garth/http.py
 - Garmin wellness-export FIT decoder and file-family observations: https://github.com/anup-shesh/garmin-local-mcp/blob/main/src/garmin_mcp/fitdecode.py
+- garth final-release authentication boundary: https://github.com/matin/garth/releases/tag/v0.8.0
 - garth discussion of the current User-Agent/Cloudflare login failure: https://github.com/matin/garth/discussions/222
 - independently reported OAuth-preauthorized 429: https://github.com/cyberjunky/python-garminconnect/issues/337
