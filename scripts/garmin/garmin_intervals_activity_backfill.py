@@ -267,6 +267,7 @@ def _print_inventory_summary(garmin, intervals, matches, missing):
     if missing:
         by_month = Counter(item.start.strftime("%Y-%m") for item in missing)
         by_type = Counter(_type_family(item.activity_type) or "OTHER" for item in missing)
+        by_garmin_type = Counter(item.activity_type for item in missing)
         print(
             "Missing by month: "
             + ", ".join(f"{key}={value}" for key, value in sorted(by_month.items()))
@@ -274,6 +275,12 @@ def _print_inventory_summary(garmin, intervals, matches, missing):
         print(
             "Missing by type: "
             + ", ".join(f"{key}={value}" for key, value in sorted(by_type.items()))
+        )
+        print(
+            "Missing by Garmin type: "
+            + ", ".join(
+                f"{key}={value}" for key, value in sorted(by_garmin_type.items())
+            )
         )
 
 
@@ -307,6 +314,11 @@ def _parse_args(argv=None):
         action="store_true",
         help="Upload only activities proven missing; default is read-only",
     )
+    parser.add_argument(
+        "--max-upload",
+        type=int,
+        help="Safety canary: upload at most this many missing activities",
+    )
     return parser.parse_args(argv)
 
 
@@ -320,6 +332,10 @@ def main(argv=None):
     )
     if start_date > end_date:
         raise ValueError("start date must not be after end date")
+    if args.max_upload is not None and args.max_upload < 1:
+        raise ValueError("max-upload must be at least 1")
+    if args.max_upload is not None and not args.upload:
+        raise ValueError("max-upload requires --upload")
 
     api_key = os.environ.get("INTERVALS_API_KEY", "").strip()
     if not api_key:
@@ -341,7 +357,9 @@ def main(argv=None):
         print("Intervals.icu already contains every Garmin activity in range")
         return 0
 
-    _upload_missing(garmin_client, intervals_client, missing)
+    to_upload = missing[: args.max_upload] if args.max_upload else missing
+    expected_remaining = len(missing) - len(to_upload)
+    _upload_missing(garmin_client, intervals_client, to_upload)
 
     # Intervals normally indexes uploads synchronously, but allow a short delay.
     remaining = missing
@@ -350,16 +368,18 @@ def main(argv=None):
             intervals_client, start_date, end_date
         )
         _, remaining, _ = match_activity_inventories(garmin, refreshed)
-        if not remaining:
+        if len(remaining) <= expected_remaining:
             print(
-                f"verified all {len(garmin)} Garmin activities are present in Intervals.icu"
+                f"verified {len(to_upload)} newly uploaded activities; "
+                f"remaining missing activities: {len(remaining)}"
             )
             return 0
         if attempt < 5:
             time.sleep(5)
 
     raise RuntimeError(
-        f"Intervals.icu verification still reports {len(remaining)} missing activities"
+        "Intervals.icu verification did not confirm all activities uploaded "
+        "in this run"
     )
 
 

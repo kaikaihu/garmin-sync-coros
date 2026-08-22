@@ -28,6 +28,10 @@ on:
         required: true
         default: false
         type: boolean
+      max_upload:
+        description: 'Optional safety canary: maximum number to upload'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -48,6 +52,7 @@ jobs:
       START_DATE: ${{ inputs.start_date || '2026-01-01' }}
       END_DATE: ${{ inputs.end_date }}
       UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.upload == true }}
+      MAX_UPLOAD: ${{ inputs.max_upload }}
 
     steps:
       - uses: actions/checkout@v4
@@ -76,5 +81,8 @@ jobs:
           fi
           if [[ "$UPLOAD" == "true" ]]; then
             args+=(--upload)
+          fi
+          if [[ -n "$MAX_UPLOAD" ]]; then
+            args+=(--max-upload "$MAX_UPLOAD")
           fi
           python -m scripts.garmin.garmin_intervals_activity_backfill "${args[@]}"
