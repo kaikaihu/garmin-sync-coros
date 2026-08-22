@@ -1,6 +1,17 @@
 name: backfill-garmin-cn-activities-to-intervals
 
 on:
+  push:
+    branches:
+      - research/garmin-cn-global-health
+    paths:
+      - '.github/workflows/backfill-garmin-cn-activities-to-intervals.yml'
+      - 'scripts/garmin/garmin_client.py'
+      - 'scripts/garmin/garmin_intervals_activity_backfill.py'
+      - 'scripts/garmin/intervals_client.py'
+      - 'tests/test_garmin_client_session.py'
+      - 'tests/test_garmin_intervals_activity_backfill.py'
+      - 'tests/test_intervals_client.py'
   workflow_dispatch:
     inputs:
       start_date:
@@ -34,9 +45,9 @@ jobs:
       GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
       GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
       INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
-      START_DATE: ${{ inputs.start_date }}
+      START_DATE: ${{ inputs.start_date || '2026-01-01' }}
       END_DATE: ${{ inputs.end_date }}
-      UPLOAD: ${{ inputs.upload }}
+      UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.upload == true }}
 
     steps:
       - uses: actions/checkout@v4
