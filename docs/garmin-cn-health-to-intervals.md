@@ -73,3 +73,9 @@ python3 -m scripts.garmin.garmin_cn_token_bootstrap
 - `garth==0.4.38` 已固定在本仓库；优先复用 session，避免每次 GitHub Runner 都走密码登录。
 - 若 Garmin 使现有 session 和密码登录同时失效，Action 会明确失败，不会向 Intervals 写入空值。届时需要人工重新取得 session，或迁移到仍能认证的新客户端。
 - 定时工作流在实验分支不会自动运行；必须先完成 dry-run/单日写入验证，再把独立工作流和对应脚本合入默认分支。
+
+## GitHub Runner 验证证据（2026-08-22）
+
+- 第一次 push dry-run 暴露两个实现问题：push 事件被表达式误判为上传模式，以及 garth 的 `userName` 被误当作 Garmin `displayName`。Garmin 首个健康请求返回 403，且 `INTERVALS_API_KEY` 未配置，因此没有向 Intervals 写入。随后已把 push 条件改成永远只读、改用 profile `displayName`，并让 CLI 错误只显示异常类型，避免在公开日志中继续展开 Garmin URL/标识。
+- [第二次 GitHub Actions dry-run](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/32547808524) 成功。Runner 日志确认 `SYNC_UPLOAD=false`，并连续验证 2026-08-20 至 2026-08-22 三天的 `hrv、readiness、restingHR、sleepScore、sleepSecs、steps`；日志末尾明确为 `Intervals.icu was not modified`。
+- 这证明 GitHub Runner 当前能够使用已有中国区凭据读取健康数据并生成合规 payload。尚未完成的最后一步是配置 `INTERVALS_API_KEY` 后做单日受控写入与读回。
