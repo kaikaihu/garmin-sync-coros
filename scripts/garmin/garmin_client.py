@@ -30,6 +30,7 @@ class GarminClient:
         self.allow_password_login = allow_password_login
         self._token_load_attempted = False
         self._token_session_loaded = False
+        self._domain_configured = False
         self.newestNum = int(newest_num)
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
@@ -38,6 +39,14 @@ class GarminClient:
         }
   
   def _authenticate(self):
+      if (
+          not self._domain_configured
+          and self.auth_domain
+          and str(self.auth_domain).upper() == "CN"
+      ):
+          self.garthClient.configure(domain="garmin.cn")
+          self._domain_configured = True
+
       if self._token_session_loaded:
           return
 
@@ -69,8 +78,6 @@ class GarminClient:
               "Refusing password login because it is disabled."
           )
 
-      if self.auth_domain and str(self.auth_domain).upper() == "CN":
-          self.garthClient.configure(domain="garmin.cn")
       self.garthClient.login(self.email, self.password)
 
       headers = self.garthClient.client.sess.headers
@@ -90,6 +97,11 @@ class GarminClient:
   @login 
   def connectapi(self, path, **kwargs):
       return self.garthClient.connectapi(path, **kwargs)
+
+  @login
+  def get_display_name(self):
+      """Return Garmin's display name after restoring or creating a session."""
+      return self.garthClient.client.username
      
 
   ## 获取运动

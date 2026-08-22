@@ -74,6 +74,22 @@ class GarminClientSessionTests(unittest.TestCase):
         self.assertEqual(garth.login_calls, [])
         self.assertEqual(result["username"], "token-user")
 
+    def test_cn_domain_is_configured_before_loading_stored_token(self):
+        garth = FakeGarth()
+        client = GarminClient(
+            "user@example.com",
+            "password",
+            "CN",
+            1,
+            garth_token="serialized-token",
+            allow_password_login=False,
+            garth_client=garth,
+        )
+
+        self.assertEqual(client.get_display_name(), "token-user")
+        self.assertEqual(garth.configure_calls, [{"domain": "garmin.cn"}])
+        self.assertEqual(garth.loads_calls, ["serialized-token"])
+
     def test_missing_token_with_password_login_disabled_never_attempts_password_login(self):
         garth = FakeGarth()
         client = GarminClient(
