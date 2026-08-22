@@ -90,6 +90,17 @@ Offline parsing (with no identifiers retained in this repository) found `file_id
 
 This directly confirms that the official export is a health/wellness export, not an activity export. It also confirms that the new Global association has not yet produced a full day of monitoring, sleep, or HRV data that can serve as a target-side fidelity sample. The downloaded health archive remains only in local temporary storage and is not committed.
 
+### 7. Official product boundaries now rule out a public wellness-import path
+
+Garmin's current official documentation independently confirms the directional boundary observed above:
+
+- **Export Wellness Data** exports one day's original wellness FIT files, including steps, sleep, stress, and HRV. Garmin separately directs users seeking individual activity files to the activity-file export location. The Global ZIP observation in section 6 is therefore the correct kind of reference sample for health data, rather than an activity FIT.
+- The **Health API** describes JSON data that was already uploaded from a *supported device* to Garmin Connect, then exposed to the approved partner. Its stated metrics include steps, sleep, heart rate, stress, and HRV-related health data; it does not document an API to create those values in Garmin Connect.
+- The **Garmin Connect Developer Program** enumerates the platform-to-Garmin write features: structured workouts/training plans and courses. It enumerates Health, Activity, and Women's Health only as Garmin-to-partner data flows. No wellness, sleep, monitoring, metrics, or HRV upload is listed.
+- The **Health SDK** offers a separately licensed, enterprise device integration path. Its Standard SDK can log data without Garmin servers; its Companion SDK remains paired with the Garmin Connect experience. Neither public overview describes an endpoint for inserting third-party wellness FIT into an existing Garmin Connect account.
+
+This is not merely a missing example: on the publicly supported surface, Garmin makes wellness data device-originated. The only remaining plausible route to achieve CN → Global health parity is a private device-sync protocol used by Garmin software and a registered wearable. That protocol has not been publicly specified or independently observed here. It must not be guessed, replayed, or sent synthetic data to without a separately approved, controlled capture plan.
+
 ## Next experiment gate
 
 1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` on a trusted local machine, then rerun the same token-only device probe and require a non-empty primary wearable result. The probe must succeed before making any conclusion about the newly associated device.
@@ -101,6 +112,9 @@ This directly confirms that the official export is a health/wellness export, not
 
 - DailySync health-sync documentation: https://dailysync.vyzt.dev/docs/%E5%81%A5%E5%BA%B7%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5
 - Garmin Health API: https://developer.garmin.com/gc-developer-program/health-api/
+- Garmin Connect Developer Program overview: https://developer.garmin.com/gc-developer-program/overview/
+- Garmin Health SDK overview: https://developer.garmin.com/health-sdk/overview/
+- Garmin Support: Export Wellness Data: https://support.garmin.com/en-US/?faq=W1TvTPW8JZ6LfJSfK512Q8
 - Garmin FIT SDK overview: https://developer.garmin.com/fit/overview/
 - Garmin FIT SDK Tools / Profile: https://github.com/garmin/fit-sdk-tools
 - garth 0.4.38 session implementation: https://github.com/matin/garth/blob/0.4.38/garth/http.py
