@@ -1,6 +1,19 @@
 name: sync-garmin-cn-health-to-intervals
 
 on:
+  push:
+    branches:
+      - research/garmin-cn-global-health
+    paths:
+      - 'scripts/garmin/garmin_client.py'
+      - 'scripts/garmin/garmin_cn_token_bootstrap.py'
+      - 'scripts/garmin/garmin_health_intervals_sync.py'
+      - 'scripts/garmin/intervals_client.py'
+      - 'tests/test_garmin_client_session.py'
+      - 'tests/test_garmin_cn_token_bootstrap.py'
+      - 'tests/test_garmin_health_intervals_sync.py'
+      - 'tests/test_intervals_client.py'
+      - '.github/workflows/sync-garmin-cn-health-to-intervals.yml'
   workflow_dispatch:
     inputs:
       end_date:

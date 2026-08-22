@@ -10,6 +10,7 @@
 - 每天北京时间 10:15 重新读取并覆盖最近 3 天，补偿 Garmin 延迟结算或偶发失败。
 - 使用 Intervals.icu `PUT /api/v1/athlete/0/wellness-bulk`，同一日期重复运行是幂等的。
 - 手动触发默认 `dry_run=true`；日志只显示日期和字段名，不显示健康数值或 token。
+- 实验分支修改相关代码时会自动触发只读 dry-run；`push` 事件永远不会上传。
 - 不把原始健康 JSON、FIT 或 Intervals API key 写进 Git 仓库和 Action artifact。
 
 ## 字段映射
