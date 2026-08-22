@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import sys
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -225,5 +226,17 @@ def main(argv=None):
     return 0
 
 
+def run_cli(argv=None):
+    """Run without exposing Garmin URLs, identifiers, or response bodies."""
+    try:
+        return main(argv)
+    except Exception as err:
+        print(
+            f"health sync failed safely: {type(err).__name__}; no data was cleared",
+            file=sys.stderr,
+        )
+        return 1
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run_cli())

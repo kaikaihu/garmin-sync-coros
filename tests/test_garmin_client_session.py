@@ -9,6 +9,7 @@ from scripts.garmin.garmin_client import (
 class FakeGarthClientState:
     def __init__(self):
         self._username = None
+        self._profile = None
         self.oauth1_token = None
         self.sess = type("Session", (), {"headers": {"User-Agent": "test"}})()
 
@@ -17,6 +18,12 @@ class FakeGarthClientState:
         if self._username is None:
             raise RuntimeError("no session")
         return self._username
+
+    @property
+    def profile(self):
+        if self._profile is None:
+            raise RuntimeError("no profile")
+        return self._profile
 
 
 class FakeGarth:
@@ -38,12 +45,20 @@ class FakeGarth:
             raise self.loads_error
         if not self.profile_unavailable:
             self.client._username = "token-user"
+            self.client._profile = {
+                "userName": "token-user",
+                "displayName": "health-display-name",
+            }
         if not self.missing_oauth1:
             self.client.oauth1_token = object()
 
     def login(self, email, password):
         self.login_calls.append((email, password))
         self.client._username = "password-user"
+        self.client._profile = {
+            "userName": "password-user",
+            "displayName": "health-display-name",
+        }
 
     def configure(self, **kwargs):
         self.configure_calls.append(kwargs)
@@ -86,7 +101,7 @@ class GarminClientSessionTests(unittest.TestCase):
             garth_client=garth,
         )
 
-        self.assertEqual(client.get_display_name(), "token-user")
+        self.assertEqual(client.get_display_name(), "health-display-name")
         self.assertEqual(garth.configure_calls, [{"domain": "garmin.cn"}])
         self.assertEqual(garth.loads_calls, ["serialized-token"])
 

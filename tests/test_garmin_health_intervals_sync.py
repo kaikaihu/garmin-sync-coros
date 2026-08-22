@@ -1,8 +1,11 @@
+import io
 import unittest
+from unittest.mock import patch
 
 from scripts.garmin.garmin_health_intervals_sync import (
     GarminHealthReader,
     build_intervals_wellness_record,
+    run_cli,
 )
 
 
@@ -126,6 +129,23 @@ class GarminHealthIntervalsSyncTests(unittest.TestCase):
                 ),
             ],
         )
+
+    def test_cli_error_does_not_print_sensitive_exception_details(self):
+        stderr = io.StringIO()
+        sensitive = "403 https://connectapi.garmin.cn/private-user-id"
+
+        with (
+            patch(
+                "scripts.garmin.garmin_health_intervals_sync.main",
+                side_effect=RuntimeError(sensitive),
+            ),
+            patch("sys.stderr", stderr),
+        ):
+            result = run_cli([])
+
+        self.assertEqual(result, 1)
+        self.assertIn("RuntimeError", stderr.getvalue())
+        self.assertNotIn("private-user-id", stderr.getvalue())
 
 
 if __name__ == "__main__":

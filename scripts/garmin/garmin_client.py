@@ -101,6 +101,9 @@ class GarminClient:
   @login
   def get_display_name(self):
       """Return Garmin's display name after restoring or creating a session."""
+      profile = self.garthClient.client.profile
+      if isinstance(profile, dict) and profile.get("displayName"):
+          return profile["displayName"]
       return self.garthClient.client.username
      
 

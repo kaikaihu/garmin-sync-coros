@@ -57,7 +57,7 @@ jobs:
       INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
       SYNC_END_DATE: ${{ inputs.end_date }}
       SYNC_DAYS: ${{ inputs.days || '3' }}
-      SYNC_UPLOAD: ${{ github.event_name == 'schedule' || inputs.dry_run == false }}
+      SYNC_UPLOAD: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false) }}
 
     steps:
       - uses: actions/checkout@v4
