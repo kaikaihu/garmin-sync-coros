@@ -103,10 +103,27 @@ Garmin's current official documentation independently confirms the directional b
 
 This is not merely a missing example: on the publicly supported surface, Garmin makes wellness data device-originated. The only remaining plausible route to achieve CN → Global health parity is a private device-sync protocol used by Garmin software and a registered wearable. That protocol has not been publicly specified or independently observed here. It must not be guessed, replayed, or sent synthetic data to without a separately approved, controlled capture plan.
 
+### 8. Direct China wellness export: source-side FIT structure confirmed
+
+On 2026-08-22, the signed-in China web UI exported **2026-08-21** through its official Export Wellness Data control. The ZIP was validated and parsed only in local temporary storage; no individual identifiers, metric values, or raw FIT files are retained in this repository.
+
+| FIT family | File count | Public/profile-confirmed content |
+|---|---:|---|
+| `WELLNESS` | 11 | `monitoring`, `monitoring_info`, `monitoring_hr_data`, and `stress_level`, plus device-specific extensions |
+| `SLEEP_DATA` | 1 | `sleep_level` (global message 275) and `sleep_assessment` (346), plus extensions |
+| `HRV_STATUS` | 1 | `hrv_status_summary` (370) and many `hrv_value` records (371), plus extensions |
+| `METRICS` | 5 | device-side metric and extension messages |
+
+The archive contained 18 FIT files (about 72 KB uncompressed). File count is a backend/source partitioning detail, **not** a device count.
+
+The installed generic parser predates portions of Garmin's current profile and initially labelled several messages as `unknown_<number>`. The latest official `Profile.xlsx` resolves the key health records: `275 = sleep_level`, `346 = sleep_assessment`, `370 = hrv_status_summary`, and `371 = hrv_value`. It also confirms the expected standard fields: monitoring has timestamp/device/steps/distance/heart-rate/active-time fields; sleep has staged levels and sleep-assessment score components; HRV has nightly/weekly/baseline summary fields and timestamped values.
+
+This is the first direct source-side fidelity sample: China emits exactly the Wellness, Sleep, HRV, and Metrics file families required by the proposed sync. It proves the *data model and export encoding*, not an import route. In particular, the files contain device identity metadata and numerous vendor extensions; Garmin Global's accepted ingest endpoint, device-authentication requirements, and server-side processing remain unobserved.
+
 ## Next experiment gate
 
 1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` only after the account-rate-limit window has cleared, then rerun the same token-only device probe. The web UI confirms an associated primary wearable, but the token-only probe must still succeed before automation relies on it.
-2. Have the associated Global wearable perform one normal, real sync, then use the official Export Wellness Data control to capture its resulting wellness FIT schema before considering any write experiment.
+2. Have the associated Global wearable perform one normal, real sync, then use the official Export Wellness Data control to capture its resulting wellness FIT schema. The China source-side schema is now available; a fresh Global target-side schema is still needed before considering any write experiment.
 3. Independently observe the device's real upload/ingest transaction; public documentation does not publish a supported wellness import endpoint.
 4. Do not submit a synthetic health FIT until the device identity and exact ingest contract are both observed. Any future first write requires separate approval and must be limited to one date with a documented rollback path.
 
@@ -119,6 +136,7 @@ This is not merely a missing example: on the publicly supported surface, Garmin 
 - Garmin Support: Export Wellness Data: https://support.garmin.com/en-US/?faq=W1TvTPW8JZ6LfJSfK512Q8
 - Garmin FIT SDK overview: https://developer.garmin.com/fit/overview/
 - Garmin FIT SDK Tools / Profile: https://github.com/garmin/fit-sdk-tools
+- Garmin FIT SDK current profile: https://github.com/garmin/fit-sdk-tools/blob/main/Profile.xlsx
 - garth 0.4.38 session implementation: https://github.com/matin/garth/blob/0.4.38/garth/http.py
 - Garmin wellness-export FIT decoder and file-family observations: https://github.com/anup-shesh/garmin-local-mcp/blob/main/src/garmin_mcp/fitdecode.py
 - garth discussion of the current User-Agent/Cloudflare login failure: https://github.com/matin/garth/discussions/222
