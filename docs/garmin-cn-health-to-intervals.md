@@ -73,7 +73,7 @@ python3 -m scripts.garmin.garmin_cn_token_bootstrap
 - Garmin Connect 私有 API 随时可能变化。
 - `garth==0.4.38` 已固定在本仓库；优先复用 session，避免每次 GitHub Runner 都走密码登录。
 - 若 Garmin 使现有 session 和密码登录同时失效，Action 会明确失败，不会向 Intervals 写入空值。届时需要人工重新取得 session，或迁移到仍能认证的新客户端。
-- 定时入口已通过提交 `da518d4` 部署到默认分支；它只新增一个工作流文件，现有活动同步工作流未修改。实现仍隔离在研究分支，并由完整提交 SHA 固定。
+- 定时入口最初通过提交 `da518d4` 部署到默认分支；历史补传时提交 `4183769` 仅为手动触发增加 `22/30/31` 天选项，没有修改每日调度、现有活动同步工作流或健康同步实现。实现仍隔离在研究分支，并由完整提交 SHA 固定。
 
 ## GitHub Runner 验证证据（2026-08-22）
 
@@ -84,3 +84,12 @@ python3 -m scripts.garmin.garmin_cn_token_bootstrap
 - 写入后通过 `GET /api/v1/athlete/0/wellness/2026-08-21` 回读，确认 `restingHR、hrv、sleepSecs、sleepScore、readiness、steps` 六个字段均为非空。回读过程不在日志中输出具体健康数值。
 - [默认分支调度入口 dry-run](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/32548645382) 成功：固定检出已验证研究提交，测试通过，`SYNC_UPLOAD=false`，并明确记录 `Intervals.icu was not modified`。
 - 至此已形成可复现链路：GitHub Runner 读取 Garmin 中国区健康数据，转换为 Intervals Wellness payload，使用加密 Secret 写入并通过 API 回读验证；默认分支每日北京时间 10:15 自动重跑最近 3 天。
+
+## 历史健康数据补传证据（2026-06-01 至 2026-08-22）
+
+- [6 月只读预检](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/32551586739) 成功：连续验证 30 天，日志明确记录 `Intervals.icu was not modified`。
+- [6 月写入](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/32551658291) 成功：上传 2026-06-01 至 2026-06-30，共 30 条 Wellness 记录。
+- [7 月写入](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/32551728716) 成功：上传 2026-07-01 至 2026-07-31，共 31 条 Wellness 记录。
+- [8 月写入](https://github.com/kaikaihu/garmin-sync-coros/actions/runs/32551800097) 成功：上传 2026-08-01 至 2026-08-22，共 22 条 Wellness 记录。
+- 使用官方只读范围接口 `GET /api/v1/athlete/0/wellness?oldest=2026-06-01&newest=2026-08-22` 回读：正好 83 条记录，83 个应有日期全部存在，无缺日、无重复。
+- `readiness`、`restingHR`、`steps` 在 83 天均非空；`hrv`、`sleepScore`、`sleepSecs` 各有 82 天非空。唯一例外是 2026-07-10；该日上传前的 Garmin 中国区读取日志本身只包含 `readiness、restingHR、steps`，因此属于源数据缺失，不是 Intervals 上传丢失，也没有用 `null` 覆盖已有数据。
