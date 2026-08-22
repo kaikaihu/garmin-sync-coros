@@ -52,6 +52,8 @@ Later on the same date, a fresh local bootstrap reached the same OAuth1-preautho
 
 The browser-User-Agent retry also received `429` at the identical endpoint. The current boundary is therefore stronger: no tested `garth` password-bootstrap variant can obtain a new OAuth1 session for this Global account while Garmin is rejecting the preauthorization exchange. The script now exits with temporary-failure code `75` and a stop/retry-later message for this case instead of printing a retry stack trace. This does not change production sync or initiate any password login from GitHub Actions.
 
+On 2026-08-22, the already signed-in official Global web UI was inspected read-only. It displays an associated **primary wearable** and **primary training device**, but their displayed last-sync times predate this research by years. This supersedes the old "no device identity" state: the Global account now has the necessary device role, but not a recent on-device wellness sample. It also makes the Metrics-only export in section 6 unsurprising. No device setting, association, or sync state was changed.
+
 ### 4. FIT has published health message definitions, but no public Garmin Connect ingest contract
 
 Garmin's published FIT Profile contains these monitoring/health messages:
@@ -88,7 +90,7 @@ On 2026-08-17, the Garmin Global account was signed into through the official we
 
 Offline parsing (with no identifiers retained in this repository) found `file_id`, `file_creator`, `device_info`, and several currently unnamed FIT messages. Twenty-eight files shared one `file_id → file_creator → device_info → unknown_241 → unknown_294 → unknown_232 → unknown_378 → unknown_339` message sequence; the two remaining files had related, smaller Metrics-only sequences. These filenames use internal numeric source identifiers, so the count of 30 does **not** prove that there are 30 active watches.
 
-This directly confirms that the official export is a health/wellness export, not an activity export. It also confirms that the new Global association has not yet produced a full day of monitoring, sleep, or HRV data that can serve as a target-side fidelity sample. The downloaded health archive remains only in local temporary storage and is not committed.
+This directly confirms that the official export is a health/wellness export, not an activity export. It also confirms that the Global wearable had not recently produced a full day of monitoring, sleep, or HRV data that can serve as a target-side fidelity sample. The downloaded health archive remains only in local temporary storage and is not committed.
 
 ### 7. Official product boundaries now rule out a public wellness-import path
 
@@ -103,8 +105,8 @@ This is not merely a missing example: on the publicly supported surface, Garmin 
 
 ## Next experiment gate
 
-1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` on a trusted local machine, then rerun the same token-only device probe and require a non-empty primary wearable result. The probe must succeed before making any conclusion about the newly associated device.
-2. Capture the exact schema of a real wellness FIT from that device before considering any write experiment.
+1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` only after the account-rate-limit window has cleared, then rerun the same token-only device probe. The web UI confirms an associated primary wearable, but the token-only probe must still succeed before automation relies on it.
+2. Have the associated Global wearable perform one normal, real sync, then use the official Export Wellness Data control to capture its resulting wellness FIT schema before considering any write experiment.
 3. Independently observe the device's real upload/ingest transaction; public documentation does not publish a supported wellness import endpoint.
 4. Do not submit a synthetic health FIT until the device identity and exact ingest contract are both observed. Any future first write requires separate approval and must be limited to one date with a documented rollback path.
 
