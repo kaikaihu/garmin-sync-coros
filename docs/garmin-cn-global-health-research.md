@@ -120,6 +120,16 @@ The installed generic parser predates portions of Garmin's current profile and i
 
 This is the first direct source-side fidelity sample: China emits exactly the Wellness, Sleep, HRV, and Metrics file families required by the proposed sync. It proves the *data model and export encoding*, not an import route. In particular, the files contain device identity metadata and numerous vendor extensions; Garmin Global's accepted ingest endpoint, device-authentication requirements, and server-side processing remain unobserved.
 
+### 9. Public DailySync-compatible implementations explicitly stop at activity upload
+
+The actively maintained public repository [`gooin/dailysync-rev`](https://github.com/gooin/dailysync-rev) was reviewed at its 2026-08-21 state. It is the closest available open implementation of CN ↔ Global migration, but its README explicitly excludes physiological data such as sleep, Body Battery, and steps. Its actual sync code downloads an activity-original FIT and calls `client.uploadActivity(...)`; there is no Wellness/Sleep/HRV FIT upload implementation in the repository.
+
+Its current README also states that Garmin's 2026 GitHub Actions login `429` restriction is unresolved and recommends local execution. The code persists a client session but falls back to password login if session restoration fails, which is exactly the retry path this branch deliberately avoids after Garmin returns `429`.
+
+One recent peer repository (`lijiehao1/DailySync`) has the same activity-only CN/Global scripts and no public `sleep`, `wellness`, `hrv`, or `monitoring` implementation. The commercial DailySync documentation does advertise health migration, but tells users to contact the author for the wearable-device setup and publishes no protocol, endpoint, or source code.
+
+This narrows the result materially: the known public implementations establish activity transfer only. The health capability seen in the commercial service depends on an unpublished mechanism, not a reusable hidden function in the open repositories examined.
+
 ## Next experiment gate
 
 1. Refresh `GARMIN_GLOBAL_GARTH_TOKEN` only after the account-rate-limit window has cleared, then rerun the same token-only device probe. The web UI confirms an associated primary wearable, but the token-only probe must still succeed before automation relies on it.
@@ -137,6 +147,7 @@ This is the first direct source-side fidelity sample: China emits exactly the We
 - Garmin FIT SDK overview: https://developer.garmin.com/fit/overview/
 - Garmin FIT SDK Tools / Profile: https://github.com/garmin/fit-sdk-tools
 - Garmin FIT SDK current profile: https://github.com/garmin/fit-sdk-tools/blob/main/Profile.xlsx
+- Public activity-only CN/Global synchronizer: https://github.com/gooin/dailysync-rev
 - garth 0.4.38 session implementation: https://github.com/matin/garth/blob/0.4.38/garth/http.py
 - Garmin wellness-export FIT decoder and file-family observations: https://github.com/anup-shesh/garmin-local-mcp/blob/main/src/garmin_mcp/fitdecode.py
 - garth discussion of the current User-Agent/Cloudflare login failure: https://github.com/matin/garth/discussions/222
